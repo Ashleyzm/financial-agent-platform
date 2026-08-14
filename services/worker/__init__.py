@@ -1,2 +1,1 @@
 """Background worker service."""
-

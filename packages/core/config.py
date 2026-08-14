@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     web_port: int = 3000
-    database_url: str = "postgresql+psycopg://financial_agents:change-me@postgres:5432/financial_agents"
+    database_url: str = (
+        "postgresql+psycopg://financial_agents:change-me@postgres:5432/financial_agents"
+    )
     redis_url: str = "redis://redis:6379/0"
     log_level: str = "INFO"
 
@@ -23,4 +25,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-
