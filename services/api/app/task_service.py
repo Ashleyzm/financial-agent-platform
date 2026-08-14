@@ -4,7 +4,12 @@ from copy import deepcopy
 from threading import RLock
 from uuid import UUID
 
-from packages.agent_runtime import AgentState, create_initial_state, run_mock_workflow
+from packages.agent_runtime import (
+    AgentState,
+    WorkflowRunner,
+    create_in_memory_runner,
+    create_initial_state,
+)
 from packages.contracts import (
     CancelTaskResponse,
     ForecastRequest,
@@ -82,8 +87,16 @@ class InMemoryTaskStore:
 
 
 class TaskService:
-    def __init__(self, store: InMemoryTaskStore | None = None) -> None:
+    def __init__(
+        self,
+        store: InMemoryTaskStore | None = None,
+        runner: WorkflowRunner | None = None,
+    ) -> None:
         self.store = store or InMemoryTaskStore()
+        self.runner = runner or create_in_memory_runner()
+
+    def set_runner(self, runner: WorkflowRunner) -> None:
+        self.runner = runner
 
     def create(self, request: ForecastRequest) -> TaskReference:
         state = create_initial_state(request)
@@ -98,7 +111,7 @@ class TaskService:
 
     def run(self, task_id: UUID) -> TaskDetail:
         state = self.store.claim_for_run(task_id)
-        state = run_mock_workflow(state)
+        state = self.runner(state)
         self.store.save(state)
         return _to_detail(state)
 
