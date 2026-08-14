@@ -8,6 +8,7 @@ from langgraph.checkpoint.postgres import PostgresSaver
 
 from packages.agent_runtime import LangGraphWorkflowRunner, create_in_memory_runner
 from packages.core.config import settings
+from packages.financial_data import AkShareProvider
 from services.api.app.task_service import task_service
 from services.api.app.tasks import router as tasks_router
 
@@ -18,7 +19,9 @@ async def lifespan(_: FastAPI):
 
     with PostgresSaver.from_conn_string(settings.resolved_checkpoint_database_url) as checkpointer:
         checkpointer.setup()
-        task_service.set_runner(LangGraphWorkflowRunner(checkpointer))
+        task_service.set_runner(
+            LangGraphWorkflowRunner(checkpointer, market_data_provider=AkShareProvider())
+        )
         try:
             yield
         finally:

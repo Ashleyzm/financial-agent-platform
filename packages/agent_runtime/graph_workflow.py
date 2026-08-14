@@ -7,17 +7,27 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from packages.agent_runtime.data_node import populate_real_market_data
 from packages.agent_runtime.mock_workflow import WORKFLOW, run_mock_node
 from packages.agent_runtime.state import AgentState
 from packages.contracts import AgentName, TaskStatus
+from packages.financial_data import MarketDataProvider
 
 
 class WorkflowRunner(Protocol):
     def __call__(self, state: AgentState) -> AgentState: ...
 
 
-def _node_for(agent: AgentName) -> Callable[[AgentState], AgentState]:
+def _node_for(
+    agent: AgentName, market_data_provider: MarketDataProvider | None
+) -> Callable[[AgentState], AgentState]:
     def run(state: AgentState) -> AgentState:
+        if agent is AgentName.DATA and market_data_provider is not None:
+
+            def data_node(current: AgentState) -> None:
+                populate_real_market_data(current, market_data_provider)
+
+            return run_mock_node(state, agent, node_override=data_node)
         return run_mock_node(state, agent)
 
     return run
@@ -34,13 +44,16 @@ def _next_after(agent: AgentName) -> Callable[[AgentState], str]:
     return route
 
 
-def build_workflow(checkpointer: BaseCheckpointSaver[Any] | None = None):
+def build_workflow(
+    checkpointer: BaseCheckpointSaver[Any] | None = None,
+    market_data_provider: MarketDataProvider | None = None,
+):
     """Compile the deterministic nodes as a checkpointable LangGraph graph."""
 
     builder = StateGraph(AgentState)
     agents = [agent for agent, _ in WORKFLOW]
     for agent in agents:
-        builder.add_node(agent.value, _node_for(agent))
+        builder.add_node(agent.value, _node_for(agent, market_data_provider))
     builder.add_edge(START, agents[0].value)
     for index, agent in enumerate(agents):
         next_nodes = {END: END}
@@ -55,8 +68,12 @@ def build_workflow(checkpointer: BaseCheckpointSaver[Any] | None = None):
 class LangGraphWorkflowRunner:
     """Invoke one isolated LangGraph thread per financial task."""
 
-    def __init__(self, checkpointer: BaseCheckpointSaver[Any] | None = None) -> None:
-        self.graph = build_workflow(checkpointer)
+    def __init__(
+        self,
+        checkpointer: BaseCheckpointSaver[Any] | None = None,
+        market_data_provider: MarketDataProvider | None = None,
+    ) -> None:
+        self.graph = build_workflow(checkpointer, market_data_provider)
 
     def __call__(self, state: AgentState) -> AgentState:
         config = {"configurable": {"thread_id": str(state["task_id"])}}

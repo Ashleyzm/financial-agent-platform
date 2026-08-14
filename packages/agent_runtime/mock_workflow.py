@@ -51,7 +51,7 @@ def _data_node(state: AgentState) -> None:
 
 def _research_node(state: AgentState) -> None:
     symbol = state["request"].symbol
-    state["evidence"] = [
+    state["evidence"].append(
         EvidenceItem(
             evidence_type=EvidenceType.RESEARCH,
             title=f"{symbol} Mock 研究摘要",
@@ -60,7 +60,7 @@ def _research_node(state: AgentState) -> None:
             relevance=0.8,
             metadata={"mock": True},
         )
-    ]
+    )
     state["research_summary"] = (
         f"{symbol} 当前使用 Mock 数据完成研究流程验证，尚未接入真实新闻与财务数据。"
     )
@@ -98,12 +98,20 @@ def _risk_node(state: AgentState) -> None:
         level = RiskLevel.MEDIUM
     else:
         level = RiskLevel.LOW
+    market_evidence = next(
+        (item for item in state["evidence"] if item.evidence_type is EvidenceType.MARKET), None
+    )
+    market_factor = (
+        f"行情来源为 {market_evidence.source} 公开数据"
+        if market_evidence is not None
+        else "当前使用 Mock 行情"
+    )
     state["risk"] = RiskAssessment(
         level=level,
         confidence=ConfidenceLevel.LOW,
         volatility=volatility,
         max_drawdown=round(-volatility / 2, 4),
-        factors=["当前使用 Mock 行情", "尚未接入宏观与实时新闻数据"],
+        factors=[market_factor, "尚未接入宏观与实时新闻数据"],
     )
 
 
@@ -174,7 +182,9 @@ def run_mock_workflow(state: AgentState) -> AgentState:
     return state
 
 
-def run_mock_node(state: AgentState, agent: AgentName) -> AgentState:
+def run_mock_node(
+    state: AgentState, agent: AgentName, *, node_override: Node | None = None
+) -> AgentState:
     """Run one business node so LangGraph can checkpoint every agent boundary."""
 
     if state["status"] is TaskStatus.FAILED:
@@ -183,7 +193,7 @@ def run_mock_node(state: AgentState, agent: AgentName) -> AgentState:
         raise WorkflowExecutionError(f"任务状态 {state['status']} 不允许执行")
 
     nodes = dict(WORKFLOW)
-    node = nodes[agent]
+    node = node_override or nodes[agent]
     started_at = utc_now()
     started_clock = perf_counter()
     state["status"] = TaskStatus.RUNNING
