@@ -167,49 +167,66 @@ def run_mock_workflow(state: AgentState) -> AgentState:
     if state["status"] not in {TaskStatus.QUEUED, TaskStatus.RUNNING}:
         raise WorkflowExecutionError(f"任务状态 {state['status']} 不允许执行")
 
+    for agent, _ in WORKFLOW:
+        state = run_mock_node(state, agent)
+        if state["status"] is TaskStatus.FAILED:
+            break
+    return state
+
+
+def run_mock_node(state: AgentState, agent: AgentName) -> AgentState:
+    """Run one business node so LangGraph can checkpoint every agent boundary."""
+
+    if state["status"] is TaskStatus.FAILED:
+        return state
+    if state["status"] not in {TaskStatus.QUEUED, TaskStatus.RUNNING}:
+        raise WorkflowExecutionError(f"任务状态 {state['status']} 不允许执行")
+
+    nodes = dict(WORKFLOW)
+    node = nodes[agent]
+    started_at = utc_now()
+    started_clock = perf_counter()
     state["status"] = TaskStatus.RUNNING
-    state["updated_at"] = utc_now()
-    for agent, node in WORKFLOW:
-        started_at = utc_now()
-        started_clock = perf_counter()
-        state["current_agent"] = agent
-        _update_step(state, agent, status=AgentStatus.RUNNING, started_at=started_at)
-        try:
-            node(state)
-        except Exception as exc:
-            finished_at = utc_now()
-            error = ErrorDetail(
-                code="agent_execution_failed",
-                message=str(exc),
-                agent=agent,
-                retryable=False,
-            )
-            state["errors"].append(error)
-            state["status"] = TaskStatus.FAILED
-            state["updated_at"] = finished_at
-            _update_step(
-                state,
-                agent,
-                status=AgentStatus.FAILED,
-                started_at=started_at,
-                finished_at=finished_at,
-                duration_ms=max(0, round((perf_counter() - started_clock) * 1000)),
-                error=error,
-            )
-            return state
+    state["current_agent"] = agent
+    state["updated_at"] = started_at
+    _update_step(state, agent, status=AgentStatus.RUNNING, started_at=started_at)
+    try:
+        node(state)
+    except Exception as exc:
         finished_at = utc_now()
+        error = ErrorDetail(
+            code="agent_execution_failed",
+            message=str(exc),
+            agent=agent,
+            retryable=False,
+        )
+        state["errors"].append(error)
+        state["status"] = TaskStatus.FAILED
+        state["current_agent"] = None
+        state["updated_at"] = finished_at
         _update_step(
             state,
             agent,
-            status=AgentStatus.SUCCEEDED,
+            status=AgentStatus.FAILED,
             started_at=started_at,
             finished_at=finished_at,
             duration_ms=max(0, round((perf_counter() - started_clock) * 1000)),
-            summary=f"{agent.value} 节点执行完成",
+            error=error,
         )
-        state["updated_at"] = finished_at
+        return state
 
-    state["status"] = TaskStatus.SUCCEEDED
-    state["current_agent"] = None
-    state["updated_at"] = utc_now()
+    finished_at = utc_now()
+    _update_step(
+        state,
+        agent,
+        status=AgentStatus.SUCCEEDED,
+        started_at=started_at,
+        finished_at=finished_at,
+        duration_ms=max(0, round((perf_counter() - started_clock) * 1000)),
+        summary=f"{agent.value} 节点执行完成",
+    )
+    state["updated_at"] = finished_at
+    if agent is AgentName.REPORT:
+        state["status"] = TaskStatus.SUCCEEDED
+        state["current_agent"] = None
     return state

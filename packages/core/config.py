@@ -13,10 +13,19 @@ class Settings(BaseSettings):
     database_url: str = (
         "postgresql+psycopg://financial_agents:change-me@postgres:5432/financial_agents"
     )
+    checkpoint_database_url: str | None = None
     redis_url: str = "redis://redis:6379/0"
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @property
+    def resolved_checkpoint_database_url(self) -> str:
+        """Use an explicit URL or reuse the application's Psycopg database URL."""
+
+        return self.checkpoint_database_url or self.database_url.replace(
+            "postgresql+psycopg://", "postgresql://", 1
+        )
 
 
 @lru_cache
