@@ -5,11 +5,8 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
 from packages.contracts import CancelTaskResponse, ForecastRequest, TaskDetail, TaskReference
-from services.api.app.task_service import (
-    InvalidTaskTransitionError,
-    TaskNotFoundError,
-    task_service,
-)
+from packages.task_store import InvalidTaskTransitionError, TaskNotFoundError
+from services.api.app.task_service import task_service
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 

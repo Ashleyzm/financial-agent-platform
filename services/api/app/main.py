@@ -9,6 +9,7 @@ from langgraph.checkpoint.postgres import PostgresSaver
 from packages.agent_runtime import LangGraphWorkflowRunner, create_in_memory_runner
 from packages.core.config import settings
 from packages.financial_data import AkShareProvider
+from packages.task_store import PostgresTaskStore, RedisTaskQueue
 from services.api.app.task_service import task_service
 from services.api.app.tasks import router as tasks_router
 
@@ -17,6 +18,9 @@ from services.api.app.tasks import router as tasks_router
 async def lifespan(_: FastAPI):
     """Create checkpoint tables and keep the PostgreSQL connection alive."""
 
+    store = PostgresTaskStore(settings.resolved_database_url)
+    queue = RedisTaskQueue(settings.redis_url)
+    task_service.configure(store, queue)
     with PostgresSaver.from_conn_string(settings.resolved_checkpoint_database_url) as checkpointer:
         checkpointer.setup()
         task_service.set_runner(
@@ -26,6 +30,8 @@ async def lifespan(_: FastAPI):
             yield
         finally:
             task_service.set_runner(create_in_memory_runner())
+            store.close()
+            queue.close()
 
 
 app = FastAPI(
