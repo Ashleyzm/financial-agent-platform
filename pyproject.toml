@@ -9,6 +9,7 @@ description = "A traceable and extensible multi-agent platform for financial res
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
+  "akshare>=1.18.91,<1.19",
   "fastapi>=0.116,<1.0",
   "uvicorn[standard]>=0.35,<1.0",
   "pydantic>=2.11,<3.0",

@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-W1-04 已完成：工程骨架、公共契约、六节点 LangGraph 链路、PostgreSQL 检查点与 CI 已可运行。
+W1-05 已完成：工程骨架、六节点 LangGraph、PostgreSQL 检查点、CI 和 AkShare 真实行情已可运行。
 
 首月目标链路：
 
@@ -65,5 +65,6 @@ docs/                       产品、架构与开发文档
 
 - 六个 Agent 已通过 API 同步运行；Worker 异步队列将在后续阶段接入。
 - 任务列表暂存于 API 内存，LangGraph 运行检查点已写入 PostgreSQL。
-- 尚未接入真实LLM和金融数据。
+- 已接入 A 股、美股和港股真实日线；新闻、财务数据与 LLM 仍为后续阶段。
+- Prediction Agent 当前仍使用规则模型，输出只用于验证产品链路。
 - 产品仅用于研究与教学，不构成投资建议。
