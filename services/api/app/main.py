@@ -17,4 +17,3 @@ def health() -> dict[str, str]:
         "version": settings.app_version,
         "environment": settings.app_env,
     }
-
