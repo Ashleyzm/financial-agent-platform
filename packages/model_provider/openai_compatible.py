@@ -45,9 +45,7 @@ class OpenAICompatibleProvider(StructuredOutputMixin):
                 with httpx.Client(
                     base_url=self.base_url, timeout=request.timeout_seconds
                 ) as client:
-                    response = client.post(
-                        "chat/completions", json=payload, headers=headers
-                    )
+                    response = client.post("chat/completions", json=payload, headers=headers)
                 if response.status_code >= 500 and attempt < self.max_retries:
                     continue
                 if response.status_code >= 400:

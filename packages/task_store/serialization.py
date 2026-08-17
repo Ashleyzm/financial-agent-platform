@@ -49,9 +49,7 @@ def state_to_dict(state: AgentState) -> dict[str, Any]:
         "research_summary": state["research_summary"],
         "evidence": [item.model_dump(mode="json") for item in state["evidence"]],
         "prediction": (
-            state["prediction"].model_dump(mode="json")
-            if state["prediction"] is not None
-            else None
+            state["prediction"].model_dump(mode="json") if state["prediction"] is not None else None
         ),
         "risk": state["risk"].model_dump(mode="json") if state["risk"] is not None else None,
         "report": (

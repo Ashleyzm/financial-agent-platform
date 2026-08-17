@@ -29,9 +29,7 @@ def create_model_provider(
             model=model or values.get("LLM_MODEL", "gpt-4o-mini"),
             base_url=base_url or values.get("LLM_BASE_URL", "https://api.openai.com/v1"),
             max_retries=(
-                max_retries
-                if max_retries is not None
-                else int(values.get("LLM_MAX_RETRIES", "2"))
+                max_retries if max_retries is not None else int(values.get("LLM_MAX_RETRIES", "2"))
             ),
         )
     raise ValueError(f"不支持的 LLM_PROVIDER: {selected}")

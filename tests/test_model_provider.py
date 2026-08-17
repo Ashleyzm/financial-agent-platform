@@ -68,7 +68,7 @@ def test_openai_compatible_provider_normalizes_response(monkeypatch) -> None:
                 json={
                     "id": "req-123",
                     "model": "real-model",
-                    "choices": [{"message": {"content": "{\"ok\": true}"}}],
+                    "choices": [{"message": {"content": '{"ok": true}'}}],
                     "usage": {"total_tokens": 10},
                 },
             )

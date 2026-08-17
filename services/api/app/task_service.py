@@ -16,8 +16,6 @@ from packages.contracts import (
 from packages.task_store import (
     InMemoryTaskQueue,
     InMemoryTaskStore,
-    InvalidTaskTransitionError,
-    TaskNotFoundError,
     TaskQueue,
     TaskStore,
 )
