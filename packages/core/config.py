@@ -33,6 +33,12 @@ class Settings(BaseSettings):
             "postgresql+psycopg://", "postgresql://", 1
         )
 
+    @property
+    def resolved_database_url(self) -> str:
+        """Return a synchronous psycopg connection string for the task store."""
+
+        return self.database_url.replace("postgresql+psycopg://", "postgresql://", 1)
+
 
 @lru_cache
 def get_settings() -> Settings:
