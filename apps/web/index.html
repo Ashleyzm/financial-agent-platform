@@ -3,28 +3,197 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>金融多智能体平台</title>
-    <style>
-      body { margin: 0; font-family: Arial, "Microsoft YaHei", sans-serif; background: #f4f7fb; color: #17324d; }
-      main { max-width: 760px; margin: 80px auto; padding: 36px; background: white; border-radius: 14px; box-shadow: 0 12px 36px rgba(23,50,77,.08); }
-      h1 { margin-top: 0; }
-      .status { padding: 16px; background: #eaf2f8; border-radius: 8px; }
-      code { color: #2166a5; }
-    </style>
+    <meta name="description" content="可追踪、可解释的金融多智能体研究平台" />
+    <title>FinAgent · 金融多智能体研究平台</title>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main>
-      <p>FRAMEWORK v0.1</p>
-      <h1>金融多智能体平台</h1>
-      <p>当前阶段：W1 工程骨架与公共契约。</p>
-      <div class="status" id="status">正在检查 API 服务...</div>
-    </main>
-    <script>
-      fetch('/api/health')
-        .then((response) => response.json())
-        .then((data) => { document.querySelector('#status').textContent = `API 已连接 · ${data.version}`; })
-        .catch(() => { document.querySelector('#status').textContent = 'API 暂未连接，请检查 Docker 服务。'; });
-    </script>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="FinAgent 首页">
+          <span class="brand-mark">F</span>
+          <span>
+            <strong>FinAgent</strong>
+            <small>Decision Intelligence</small>
+          </span>
+        </a>
+        <div class="topbar-actions">
+          <a class="docs-link" href="http://localhost:8000/docs" target="_blank" rel="noreferrer">API 文档</a>
+          <div class="service-pill" id="service-pill">
+            <span class="service-dot"></span>
+            <span id="service-text">正在连接服务</span>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">MULTI-AGENT FINANCIAL RESEARCH</p>
+            <h1>让每一次市场判断<br /><span>都有证据可追踪</span></h1>
+            <p class="hero-copy">输入股票代码，由六个专业 Agent 完成数据准备、研究、预测、风险检查和报告生成。</p>
+          </div>
+          <div class="hero-stats" aria-label="平台能力">
+            <div><strong>6</strong><span>协作 Agent</span></div>
+            <div><strong>3</strong><span>覆盖市场</span></div>
+            <div><strong>100%</strong><span>过程可追踪</span></div>
+          </div>
+        </section>
+
+        <section class="workspace">
+          <aside class="control-column">
+            <div class="panel form-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-kicker">NEW RESEARCH</p>
+                  <h2>创建研究任务</h2>
+                </div>
+                <span class="step-badge">01</span>
+              </div>
+
+              <form id="task-form">
+                <label for="symbol">股票代码</label>
+                <div class="symbol-input">
+                  <input id="symbol" name="symbol" value="NVDA" maxlength="15" autocomplete="off" required />
+                  <span id="currency-hint">US</span>
+                </div>
+
+                <div class="form-grid">
+                  <div>
+                    <label for="market">交易市场</label>
+                    <select id="market" name="market">
+                      <option value="US">美股 · US</option>
+                      <option value="CN">A股 · CN</option>
+                      <option value="HK">港股 · HK</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="horizon">预测周期</label>
+                    <select id="horizon" name="horizon_days">
+                      <option value="5">未来 5 日</option>
+                      <option value="10">未来 10 日</option>
+                      <option value="20">未来 20 日</option>
+                    </select>
+                  </div>
+                </div>
+
+                <label for="question">研究问题</label>
+                <textarea id="question" name="question" rows="3">分析该股票未来走势</textarea>
+
+                <div class="check-row">
+                  <label class="check-item"><input id="include-news" type="checkbox" checked /><span>新闻研究</span></label>
+                  <label class="check-item"><input id="include-financials" type="checkbox" checked /><span>财务分析</span></label>
+                </div>
+
+                <button class="primary-button" id="submit-button" type="submit">
+                  <span>启动多 Agent 研究</span>
+                  <span aria-hidden="true">→</span>
+                </button>
+                <p class="form-note">研究通常需要数秒完成。结果仅用于教学与研究。</p>
+              </form>
+            </div>
+
+            <div class="panel history-panel">
+              <div class="history-heading">
+                <h2>最近任务</h2>
+                <button class="icon-button" id="refresh-button" type="button" aria-label="刷新任务">刷新</button>
+              </div>
+              <div class="task-list" id="task-list">
+                <p class="muted-message">正在加载任务...</p>
+              </div>
+            </div>
+          </aside>
+
+          <section class="result-column" aria-live="polite">
+            <div class="empty-state panel" id="empty-state">
+              <div class="empty-visual">
+                <span class="orbit orbit-one"></span>
+                <span class="orbit orbit-two"></span>
+                <span class="core-dot"></span>
+              </div>
+              <p class="section-kicker">READY TO RESEARCH</p>
+              <h2>你的 Agent 团队已就绪</h2>
+              <p>创建一个研究任务，这里将展示执行时间线、模型预测、证据来源和风险分析。</p>
+              <div class="agent-preview">
+                <span>总控</span><span>数据</span><span>研究</span><span>预测</span><span>风险</span><span>报告</span>
+              </div>
+            </div>
+
+            <div class="task-dashboard hidden" id="task-dashboard">
+              <div class="task-header panel">
+                <div>
+                  <div class="task-title-line">
+                    <span class="market-tag" id="detail-market">US</span>
+                    <h2 id="detail-symbol">NVDA</h2>
+                    <span class="status-badge" id="detail-status">排队中</span>
+                  </div>
+                  <p id="detail-question">分析该股票未来走势</p>
+                </div>
+                <div class="task-meta">
+                  <span>任务编号</span>
+                  <button id="task-id" class="copy-id" type="button" title="复制任务编号">—</button>
+                </div>
+              </div>
+
+              <div class="loading-banner hidden" id="loading-banner">
+                <span class="spinner"></span>
+                <div><strong>Agent 团队正在研究</strong><p>数据获取和分析期间请保持页面开启。</p></div>
+              </div>
+
+              <div class="error-banner hidden" id="error-banner"></div>
+
+              <div class="panel timeline-panel">
+                <div class="panel-heading compact">
+                  <div><p class="section-kicker">EXECUTION TRACE</p><h2>Agent 执行时间线</h2></div>
+                  <span id="timeline-progress">0 / 6 完成</span>
+                </div>
+                <div class="timeline" id="timeline"></div>
+              </div>
+
+              <div class="report-area hidden" id="report-area">
+                <div class="metric-grid">
+                  <article class="metric-card primary-metric">
+                    <span>综合方向</span><strong id="direction-value">—</strong><small id="direction-note">模型综合判断</small>
+                  </article>
+                  <article class="metric-card">
+                    <span>上涨概率</span><strong id="probability-value">—</strong><small id="model-name">—</small>
+                  </article>
+                  <article class="metric-card">
+                    <span>预期收益</span><strong id="return-value">—</strong><small id="horizon-note">—</small>
+                  </article>
+                  <article class="metric-card">
+                    <span>风险等级</span><strong id="risk-value">—</strong><small id="confidence-note">—</small>
+                  </article>
+                </div>
+
+                <div class="report-grid">
+                  <article class="panel narrative-card">
+                    <div class="card-title"><span class="title-index">02</span><h2>研究摘要</h2></div>
+                    <p id="research-summary"></p>
+                  </article>
+                  <article class="panel risk-card">
+                    <div class="card-title"><span class="title-index">03</span><h2>风险提示</h2></div>
+                    <ul id="risk-factors"></ul>
+                  </article>
+                </div>
+
+                <article class="panel evidence-panel">
+                  <div class="panel-heading compact">
+                    <div><p class="section-kicker">TRACEABLE SOURCES</p><h2>关键证据</h2></div>
+                    <span id="evidence-count">0 条证据</span>
+                  </div>
+                  <div class="evidence-list" id="evidence-list"></div>
+                </article>
+
+                <p class="disclaimer" id="disclaimer"></p>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script src="/app.js" defer></script>
   </body>
 </html>
-
