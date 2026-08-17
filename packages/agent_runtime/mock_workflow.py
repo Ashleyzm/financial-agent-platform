@@ -205,10 +205,10 @@ def run_mock_node(
     except Exception as exc:
         finished_at = utc_now()
         error = ErrorDetail(
-            code="agent_execution_failed",
+            code=getattr(exc, "code", "agent_execution_failed"),
             message=str(exc),
             agent=agent,
-            retryable=False,
+            retryable=bool(getattr(exc, "retryable", False)),
         )
         state["errors"].append(error)
         state["status"] = TaskStatus.FAILED

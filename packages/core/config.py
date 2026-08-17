@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     checkpoint_database_url: str | None = None
     redis_url: str = "redis://redis:6379/0"
     log_level: str = "INFO"
+    llm_provider: str = "mock"
+    llm_api_key: str | None = None
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4o-mini"
+    llm_timeout_seconds: float = 30.0
+    llm_max_retries: int = 2
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

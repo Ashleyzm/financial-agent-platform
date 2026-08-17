@@ -60,9 +60,7 @@ class PostgresTaskStore:
 
     def list(self) -> list[AgentState]:
         with self._pool.connection() as conn:
-            rows = conn.execute(
-                "SELECT payload FROM tasks ORDER BY created_at DESC"
-            ).fetchall()
+            rows = conn.execute("SELECT payload FROM tasks ORDER BY created_at DESC").fetchall()
         return [state_from_dict(row[0]) for row in rows]
 
     def claim_for_run(self, task_id: UUID) -> AgentState:
@@ -158,6 +156,4 @@ class PostgresTaskStore:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks (created_at DESC)"
             )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks (status)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks (status)")

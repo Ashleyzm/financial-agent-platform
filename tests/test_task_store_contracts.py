@@ -9,9 +9,7 @@ from packages.task_store.serialization import state_from_dict, state_to_dict
 
 
 def test_state_roundtrip_preserves_agent_state() -> None:
-    state = create_initial_state(
-        ForecastRequest(symbol="NVDA", market=Market.US, horizon_days=5)
-    )
+    state = create_initial_state(ForecastRequest(symbol="NVDA", market=Market.US, horizon_days=5))
     state["research_summary"] = "mock summary"
 
     restored = state_from_dict(state_to_dict(state))
@@ -26,9 +24,7 @@ def test_state_roundtrip_preserves_agent_state() -> None:
 
 def test_in_memory_store_claims_and_cancels() -> None:
     store = InMemoryTaskStore()
-    state = create_initial_state(
-        ForecastRequest(symbol="AAPL", market=Market.US, horizon_days=5)
-    )
+    state = create_initial_state(ForecastRequest(symbol="AAPL", market=Market.US, horizon_days=5))
     store.save(state)
 
     claimed = store.claim_for_run(state["task_id"])
