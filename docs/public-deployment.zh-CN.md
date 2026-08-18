@@ -78,6 +78,6 @@ docker compose --env-file .env.production -f compose.prod.yaml up -d --build --w
 - 限制云防火墙规则，并及时更新 Docker 和服务器系统。
 - 将任务输入和生成报告视为不可信内容处理。
 
-## 局域网访问
+## 本地开发隔离
 
-本地平台运行时，同一 Wi-Fi/局域网中的用户可以访问 `http://你的局域网IP:3000`，前提是 Windows 防火墙允许 TCP `3000` 入站。这不是公网部署，不建议在不可信网络中使用。
+默认开发配置将 Web、API、PostgreSQL 和 Redis 全部绑定到 `127.0.0.1`。除非主动修改 Compose 端口绑定，否则局域网中的其他设备无法连接。

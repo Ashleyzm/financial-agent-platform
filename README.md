@@ -90,6 +90,8 @@ Open:
 
 Create a stock research task in the Web console. The Worker will consume it automatically and the page will update until the report is ready.
 
+The development profile binds all published ports to `127.0.0.1`; it is not reachable from other computers by default.
+
 Stop the platform:
 
 ```powershell
