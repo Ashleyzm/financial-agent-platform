@@ -1,4 +1,5 @@
 .env
+.env.production
 .venv/
 .conda_pkgs/
 .pip_cache/
