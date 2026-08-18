@@ -1,74 +1,166 @@
-# 金融多智能体平台
+# FinAgent Platform
 
-面向金融研究任务的多智能体平台。当前版本为首月框架 `v0.1.0`，目标是建立可运行、可替换、可追踪的基础链路。
+<p align="center">
+  <strong>An explainable, traceable multi-agent platform for financial research.</strong>
+</p>
 
-## 当前阶段
+<p align="center">
+  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">中文</a>
+</p>
 
-W2/W3 集成链路已完成：任务由 API 写入 PostgreSQL 和 Redis，Worker 自动消费并按节点执行 LangGraph；节点状态、错误、`task_id`、`trace_id`、`module_code` 和模型用量可由 Web 轮询查看。
+<p align="center">
+  <a href="https://github.com/Ashleyzm/financial-agent-platform/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Ashleyzm/financial-agent-platform/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.116%2B-009688?logo=fastapi&logoColor=white">
+  <img alt="LangGraph" src="https://img.shields.io/badge/Workflow-LangGraph-1C3C3C">
+  <img alt="Docker" src="https://img.shields.io/badge/Runtime-Docker_Compose-2496ED?logo=docker&logoColor=white">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-6C63FF">
+</p>
 
-首月目标链路：
+FinAgent Platform turns a stock research question into an asynchronous, auditable workflow. A supervisor coordinates specialist agents for market data, research, prediction, risk, and reporting. The LLM is used as a reasoning and explanation layer; structured models and tools remain responsible for data and prediction.
 
-```text
-Web -> FastAPI -> Redis/Worker -> LangGraph -> PostgreSQL -> 研究报告
+> [!IMPORTANT]
+> This project is intended for research and education. Its output is not investment advice.
+
+## Why this project
+
+- **Explainable by design** — every task exposes agent steps, evidence, model usage, errors, and trace IDs.
+- **Provider-independent** — switch between deterministic mocks, AkShare market data, and OpenAI-compatible LLM providers.
+- **Asynchronous and persistent** — FastAPI, Redis, Worker, LangGraph, and PostgreSQL form a complete task pipeline.
+- **Student-friendly** — the entire demo starts with Docker Compose and works without paid API keys.
+- **Production-aware** — health checks, migrations, structured errors, CI, and a public-server deployment profile are included.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User] --> W[Web Console]
+    W --> A[FastAPI]
+    A --> P[(PostgreSQL)]
+    A --> Q[(Redis Queue)]
+    Q --> WK[Worker]
+    WK --> G[LangGraph Runtime]
+    G --> S[Supervisor]
+    S --> D[Data Agent]
+    S --> R[Research Agent]
+    S --> M[Prediction Agent]
+    S --> K[Risk Agent]
+    S --> F[Report Agent]
+    G --> P
+    P --> A
 ```
 
-## 环境要求
+```text
+Web -> FastAPI -> PostgreSQL / Redis -> Worker -> LangGraph -> Forecast Report
+```
+
+## Current capabilities
+
+| Area | Status | Description |
+|---|---|---|
+| Task API | Ready | Create, list, inspect, cancel, and trace research tasks |
+| Async runtime | Ready | Redis queue and independent Worker execution |
+| Multi-agent workflow | Ready | Six-node LangGraph workflow with persisted progress |
+| Market data | Ready | Deterministic mock and AkShare provider modes |
+| LLM integration | Ready | Mock and OpenAI-compatible provider modes |
+| Web console | Ready | Task submission, polling, timeline, report, and failure states |
+| Prediction model | Prototype | Rule-based baseline; ML/time-series model is planned |
+| News and filings RAG | Planned | Retrieval, citations, and source management |
+
+## Quick start
+
+### Requirements
 
 - Git
-- Python 3.12（本地开发）
-- Docker Desktop（推荐用于统一运行环境）
-- VS Code（可选）
+- Docker Desktop with Docker Compose
+- Python 3.12+ only when running tests locally
 
-不需要独立安装 PostgreSQL 和 Redis，它们由 Docker Compose 启动。
+### Run the complete platform
 
-## 第一次启动
-
-1. 复制环境变量文件：
-
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-
-2. 启动全部服务：
-
-   ```powershell
-   docker compose up --build
-   ```
-
-3. 验证服务：
-
-   - Web：http://localhost:3000
-   - API健康检查：http://localhost:8000/health
-   - API文档：http://localhost:8000/docs
-
-4. 停止服务：
-
-   ```powershell
-   docker compose down
-   ```
-
-默认使用不联网的 Mock Data 与 Mock LLM，保证学生团队没有外部 Key 也能稳定演示。需要真实行情时设置 `MARKET_DATA_PROVIDER=akshare`；需要兼容模型时设置 `LLM_PROVIDER=openai-compatible`、`LLM_API_KEY`、`LLM_BASE_URL` 和 `LLM_MODEL`。
-
-## 项目结构
-
-```text
-apps/web/                   最小Web界面
-services/api/               FastAPI服务
-services/worker/            异步任务Worker
-packages/contracts/         公共数据契约
-packages/agent_runtime/     Agent工作流运行时
-packages/model_provider/    统一 LLM Provider 与结构化输出
-packages/financial_data/    金融数据与Provider
-tests/                      自动化测试
-infra/                      部署与基础设施说明
-docs/                       产品、架构与开发文档
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build --wait
 ```
 
-## 当前限制
+Open:
 
-- API、Redis、Worker、LangGraph 和 PostgreSQL 已打通；`POST /run` 仅保留给调试和测试，Web 使用异步队列。
-- 任务、节点时间线和报告持久化到 PostgreSQL；LangGraph checkpoint 同样使用 PostgreSQL。
-- 已提供 Mock 与 AkShare 行情模式；新闻与财务数据仍为后续阶段。
-- 已提供 Mock 与 OpenAI-compatible LLM；当前只有 Research Agent 使用 LLM。
-- Prediction Agent 当前仍使用规则模型，输出只用于验证产品链路。
-- 产品仅用于研究与教学，不构成投资建议。
+- Web console: <http://localhost:3000>
+- API health: <http://localhost:8000/health>
+- API documentation: <http://localhost:8000/docs>
+
+Create a stock research task in the Web console. The Worker will consume it automatically and the page will update until the report is ready.
+
+Stop the platform:
+
+```powershell
+docker compose down
+```
+
+## Provider configuration
+
+The default configuration is deterministic and requires no external key:
+
+```env
+MARKET_DATA_PROVIDER=mock
+LLM_PROVIDER=mock
+```
+
+To enable real market data, set `MARKET_DATA_PROVIDER=akshare`. To use an OpenAI-compatible model endpoint, configure `LLM_PROVIDER=openai-compatible`, `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL` in `.env`.
+
+Never commit `.env` or production secrets.
+
+## Public deployment
+
+`localhost` is visible only on the current computer. To provide a stable link for teammates or reviewers, deploy the full stack to a Linux server with a public IP:
+
+```bash
+cp .env.production.example .env.production
+# Replace every CHANGE_ME value before continuing.
+docker compose --env-file .env.production -f compose.prod.yaml up -d --build --wait
+```
+
+The production profile exposes only the Web gateway. PostgreSQL, Redis, API, and Worker remain on the private Docker network. See [Public deployment guide](docs/public-deployment.md) for server, firewall, domain, HTTPS, and security instructions.
+
+## Repository layout
+
+```text
+apps/web/                   Web console and Nginx gateway
+services/api/               FastAPI application
+services/worker/            Asynchronous task worker
+packages/contracts/         Shared API and workflow contracts
+packages/agent_runtime/     LangGraph workflow and agent tools
+packages/model_provider/    LLM provider abstraction
+packages/financial_data/    Financial data providers
+packages/task_store/        PostgreSQL and Redis persistence
+infra/                      Database migrations and infrastructure
+tests/                      Unit and end-to-end tests
+docs/                       Product, architecture, and deployment docs
+```
+
+## Development checks
+
+```powershell
+python -m pip install -e ".[dev]"
+ruff check .
+ruff format --check .
+pytest -q
+python tests/e2e_smoke.py
+```
+
+Every pull request runs code-quality checks and a fresh Docker end-to-end workflow in GitHub Actions.
+
+## Roadmap
+
+- ML/time-series prediction baseline and backtesting
+- News, filings, annual-report, and research-report RAG
+- Evidence citations and source freshness controls
+- Authentication, quotas, and team workspaces
+- Observability dashboard, evaluation sets, and model cost controls
+
+## Acknowledgements
+
+The product direction is informed by the open-source projects [TradingAgents](https://github.com/TauricResearch/TradingAgents) and [go-stock](https://github.com/ArvinLovegood/go-stock). This repository uses its own platform architecture and implementation.
+
+## License
+
+No open-source license has been declared yet. All rights are reserved by the repository owner unless a license file is added.
