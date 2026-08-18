@@ -78,6 +78,6 @@ Back up the `postgres_data` Docker volume before important upgrades.
 - Restrict cloud firewall rules and keep Docker/server packages updated.
 - Treat task inputs and generated reports as untrusted content.
 
-## Local network access
+## Local development isolation
 
-People on the same Wi-Fi/LAN may use `http://YOUR_LAN_IP:3000` while the local stack is running, provided Windows Firewall allows inbound TCP `3000`. This is not Internet deployment and should not be used on an untrusted network.
+The default development profile binds Web, API, PostgreSQL, and Redis to `127.0.0.1`. Other devices on the LAN cannot connect unless the Compose bindings are deliberately changed.
