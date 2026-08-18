@@ -41,6 +41,8 @@ def test_langgraph_uses_injected_research_provider() -> None:
     assert result["status"] is TaskStatus.SUCCEEDED
     assert "Mock Research Agent" in result["research_summary"]
     assert any(item.source == "mock-llm" for item in result["evidence"])
+    assert result["model_usage"].provider == "mock"
+    assert result["model_usage"].total_tokens == 0
 
 
 def test_research_timeout_is_traceable_and_retryable() -> None:
@@ -54,4 +56,5 @@ def test_research_timeout_is_traceable_and_retryable() -> None:
     assert research_step.status is AgentStatus.FAILED
     assert research_step.error is not None
     assert research_step.error.code == "llm_timeout"
+    assert research_step.error.module_code == "AGT-03"
     assert research_step.error.retryable is True

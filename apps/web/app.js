@@ -62,7 +62,8 @@ async function api(path = "", options = {}) {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const detail = typeof payload.detail === "string" ? payload.detail : "请求失败，请稍后重试";
+    const detail = payload.error?.message
+      || (typeof payload.detail === "string" ? payload.detail : "请求失败，请稍后重试");
     throw new Error(detail);
   }
   return payload;
@@ -89,8 +90,7 @@ function showToast(message) {
 
 function setBusy(busy) {
   elements.submit.disabled = busy;
-  elements.submit.querySelector("span:first-child").textContent = busy ? "研究任务执行中..." : "启动多 Agent 研究";
-  elements.loading.classList.toggle("hidden", !busy);
+  elements.submit.querySelector("span:first-child").textContent = busy ? "正在提交任务..." : "启动多 Agent 研究";
 }
 
 function formatTime(value) {
@@ -140,7 +140,7 @@ function renderTimeline(timeline = []) {
     <div class="timeline-step ${escapeHTML(step.status)}">
       <span class="step-dot">${step.status === "succeeded" ? "✓" : String(index + 1).padStart(2, "0")}</span>
       <strong>${escapeHTML(agentLabels[step.agent] || step.agent)}</strong>
-      <small>${step.duration_ms === null ? statusLabels[step.status] || step.status : `${step.duration_ms} ms`}</small>
+      <small>${escapeHTML(step.module_code || "AGT-01")} · ${step.duration_ms === null ? statusLabels[step.status] || step.status : `${step.duration_ms} ms`}</small>
     </div>
   `).join("");
 }
@@ -156,7 +156,7 @@ function renderEvidence(evidence = []) {
   `).join("") : '<p class="muted-message">暂无证据。</p>';
 }
 
-function renderReport(report) {
+function renderReport(report, modelUsage = {}) {
   if (!report) {
     elements.report.classList.add("hidden");
     return;
@@ -170,7 +170,10 @@ function renderReport(report) {
   document.querySelector("#return-value").textContent = formatPercent(prediction.expected_return, true);
   document.querySelector("#risk-value").textContent = riskLabels[risk.level] || risk.level;
   document.querySelector("#risk-value").className = `risk-${risk.level}`;
-  document.querySelector("#model-name").textContent = prediction.model_name;
+  const usageText = modelUsage.provider
+    ? `${modelUsage.provider} · ${Number(modelUsage.total_tokens || 0)} tokens`
+    : prediction.model_name;
+  document.querySelector("#model-name").textContent = usageText;
   document.querySelector("#horizon-note").textContent = `未来 ${prediction.horizon_days} 个交易日`;
   document.querySelector("#confidence-note").textContent = confidenceLabels[risk.confidence] || risk.confidence;
   document.querySelector("#research-summary").textContent = report.research_summary;
@@ -194,10 +197,20 @@ function renderTask(task) {
   taskId.textContent = shortId(task.task_id);
   taskId.dataset.fullId = task.task_id;
   elements.error.classList.toggle("hidden", !task.error);
-  elements.error.textContent = task.error ? `${agentLabels[task.error.agent] || "任务"}：${task.error.message}` : "";
+  elements.error.textContent = task.error
+    ? `${task.error.module_code || "PLT-03"} · ${agentLabels[task.error.agent] || "任务"}：${task.error.message}`
+    : "";
   renderTimeline(task.timeline);
-  renderReport(task.report);
+  renderReport(task.report, task.model_usage);
   elements.loading.classList.toggle("hidden", TERMINAL_STATUSES.has(task.status));
+  if (!TERMINAL_STATUSES.has(task.status)) {
+    const loadingTitle = elements.loading.querySelector("strong");
+    const loadingText = elements.loading.querySelector("p");
+    loadingTitle.textContent = task.status === "queued" ? "任务正在排队" : "Agent 团队正在研究";
+    loadingText.textContent = task.status === "queued"
+      ? "Worker 将自动领取任务，无需手动运行。"
+      : "页面每 2 秒自动更新节点进度。";
+  }
   loadTasks();
 }
 
@@ -232,9 +245,7 @@ async function createTask(event) {
     const created = await api("", { method: "POST", body: JSON.stringify(payload) });
     activeTaskId = created.task_id;
     await loadTask(created.task_id);
-    const result = await api(`/${created.task_id}/run`, { method: "POST" });
-    renderTask(result);
-    showToast(result.status === "succeeded" ? "研究报告已生成" : "任务执行结束");
+    showToast("任务已进入异步队列");
   } catch (error) {
     elements.error.textContent = error.message;
     elements.error.classList.remove("hidden");

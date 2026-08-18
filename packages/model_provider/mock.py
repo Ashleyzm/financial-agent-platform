@@ -61,4 +61,5 @@ class MockLLMProvider(StructuredOutputMixin):
             provider=self.name,
             model=request.model or "mock-research-v0.1",
             request_id="mock-request",
+            usage={"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
         )

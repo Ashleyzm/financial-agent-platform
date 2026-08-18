@@ -84,6 +84,7 @@ def _to_detail(state) -> TaskDetail:
         timeline=state["timeline"],
         report=state["report"],
         error=state["errors"][-1] if state["errors"] else None,
+        model_usage=state["model_usage"],
     )
 
 

@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
 from packages.agent_runtime.state import AgentState
@@ -42,7 +43,7 @@ class PostgresTaskStore:
                     state["task_id"],
                     state["trace_id"],
                     state["status"].value,
-                    payload,
+                    Jsonb(payload),
                     state["created_at"],
                     state["updated_at"],
                 ),

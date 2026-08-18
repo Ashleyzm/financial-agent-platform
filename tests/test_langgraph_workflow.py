@@ -34,3 +34,31 @@ def test_langgraph_uses_task_id_as_isolated_thread() -> None:
     second_config = {"configurable": {"thread_id": str(second["task_id"])}}
     assert runner.graph.get_state(first_config).values["request"].symbol == "NVDA"
     assert runner.graph.get_state(second_config).values["request"].symbol == "AAPL"
+
+
+def test_langgraph_publishes_each_node_state_for_worker_persistence() -> None:
+    snapshots: list[tuple[str, int]] = []
+
+    def capture(state) -> None:
+        completed = sum(step.status is AgentStatus.SUCCEEDED for step in state["timeline"])
+        snapshots.append((state["status"].value, completed))
+
+    runner = LangGraphWorkflowRunner(InMemorySaver(), state_listener=capture)
+    result = runner(create_initial_state(ForecastRequest(symbol="NVDA")))
+
+    assert result["status"] is TaskStatus.SUCCEEDED
+    assert [completed for _, completed in snapshots] == [1, 2, 3, 4, 5, 6]
+    assert snapshots[-1][0] == "succeeded"
+
+
+def test_timeline_contains_owner_routing_module_codes() -> None:
+    state = create_initial_state(ForecastRequest(symbol="NVDA"))
+
+    assert [step.module_code for step in state["timeline"]] == [
+        "AGT-01",
+        "FIN-02",
+        "AGT-03",
+        "AGT-03",
+        "AGT-03",
+        "FIN-06",
+    ]

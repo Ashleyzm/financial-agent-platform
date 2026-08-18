@@ -20,11 +20,15 @@ class WorkflowRunner(Protocol):
     def __call__(self, state: AgentState) -> AgentState: ...
 
 
+StateListener = Callable[[AgentState], None]
+
+
 def _node_for(
     agent: AgentName,
     market_data_provider: MarketDataProvider | None,
     llm_provider: LLMProvider | None,
     llm_timeout_seconds: float,
+    state_listener: StateListener | None,
 ) -> Callable[[AgentState], AgentState]:
     def run(state: AgentState) -> AgentState:
         if agent is AgentName.DATA and market_data_provider is not None:
@@ -32,14 +36,18 @@ def _node_for(
             def data_node(current: AgentState) -> None:
                 populate_real_market_data(current, market_data_provider)
 
-            return run_mock_node(state, agent, node_override=data_node)
-        if agent is AgentName.RESEARCH and llm_provider is not None:
+            result = run_mock_node(state, agent, node_override=data_node)
+        elif agent is AgentName.RESEARCH and llm_provider is not None:
 
             def research_node(current: AgentState) -> None:
                 run_research_agent(current, llm_provider, timeout_seconds=llm_timeout_seconds)
 
-            return run_mock_node(state, agent, node_override=research_node)
-        return run_mock_node(state, agent)
+            result = run_mock_node(state, agent, node_override=research_node)
+        else:
+            result = run_mock_node(state, agent)
+        if state_listener is not None:
+            state_listener(result)
+        return result
 
     return run
 
@@ -60,6 +68,7 @@ def build_workflow(
     market_data_provider: MarketDataProvider | None = None,
     llm_provider: LLMProvider | None = None,
     llm_timeout_seconds: float = 30.0,
+    state_listener: StateListener | None = None,
 ):
     """Compile the deterministic nodes as a checkpointable LangGraph graph."""
 
@@ -68,7 +77,13 @@ def build_workflow(
     for agent in agents:
         builder.add_node(
             agent.value,
-            _node_for(agent, market_data_provider, llm_provider, llm_timeout_seconds),
+            _node_for(
+                agent,
+                market_data_provider,
+                llm_provider,
+                llm_timeout_seconds,
+                state_listener,
+            ),
         )
     builder.add_edge(START, agents[0].value)
     for index, agent in enumerate(agents):
@@ -90,12 +105,14 @@ class LangGraphWorkflowRunner:
         market_data_provider: MarketDataProvider | None = None,
         llm_provider: LLMProvider | None = None,
         llm_timeout_seconds: float = 30.0,
+        state_listener: StateListener | None = None,
     ) -> None:
         self.graph = build_workflow(
             checkpointer,
             market_data_provider,
             llm_provider,
             llm_timeout_seconds,
+            state_listener,
         )
 
     def __call__(self, state: AgentState) -> AgentState:
@@ -108,7 +125,11 @@ def create_in_memory_runner(
     llm_provider: LLMProvider | None = None,
     *,
     llm_timeout_seconds: float = 30.0,
+    state_listener: StateListener | None = None,
 ) -> LangGraphWorkflowRunner:
     return LangGraphWorkflowRunner(
-        InMemorySaver(), llm_provider=llm_provider, llm_timeout_seconds=llm_timeout_seconds
+        InMemorySaver(),
+        llm_provider=llm_provider,
+        llm_timeout_seconds=llm_timeout_seconds,
+        state_listener=state_listener,
     )

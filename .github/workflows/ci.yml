@@ -27,3 +27,22 @@ jobs:
         run: ruff format --check .
       - name: Test
         run: pytest -q
+
+  docker-e2e:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Configure deterministic providers
+        run: cp .env.example .env
+      - name: Start platform
+        run: docker compose up -d --build --wait
+      - name: Run async smoke test
+        run: python tests/e2e_smoke.py
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop platform
+        if: always()
+        run: docker compose down -v

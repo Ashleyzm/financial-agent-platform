@@ -1,5 +1,6 @@
 """Deterministic mock workflow used before LangGraph and real providers are connected."""
 
+import logging
 from collections.abc import Callable
 from time import perf_counter
 
@@ -18,8 +19,11 @@ from packages.contracts import (
     RiskAssessment,
     RiskLevel,
     TaskStatus,
+    module_code_for_agent,
     utc_now,
 )
+
+logger = logging.getLogger("agent_runtime")
 
 
 class WorkflowExecutionError(RuntimeError):
@@ -200,6 +204,14 @@ def run_mock_node(
     state["current_agent"] = agent
     state["updated_at"] = started_at
     _update_step(state, agent, status=AgentStatus.RUNNING, started_at=started_at)
+    module_code = module_code_for_agent(agent)
+    logger.info(
+        "agent_node_started task_id=%s trace_id=%s module_code=%s agent=%s",
+        state["task_id"],
+        state["trace_id"],
+        module_code,
+        agent.value,
+    )
     try:
         node(state)
     except Exception as exc:
@@ -208,6 +220,7 @@ def run_mock_node(
             code=getattr(exc, "code", "agent_execution_failed"),
             message=str(exc),
             agent=agent,
+            module_code=module_code,
             retryable=bool(getattr(exc, "retryable", False)),
         )
         state["errors"].append(error)
@@ -222,6 +235,14 @@ def run_mock_node(
             finished_at=finished_at,
             duration_ms=max(0, round((perf_counter() - started_clock) * 1000)),
             error=error,
+        )
+        logger.exception(
+            "agent_node_failed task_id=%s trace_id=%s module_code=%s agent=%s error_code=%s",
+            state["task_id"],
+            state["trace_id"],
+            module_code,
+            agent.value,
+            error.code,
         )
         return state
 
@@ -239,4 +260,12 @@ def run_mock_node(
     if agent is AgentName.REPORT:
         state["status"] = TaskStatus.SUCCEEDED
         state["current_agent"] = None
+    logger.info(
+        "agent_node_finished task_id=%s trace_id=%s module_code=%s agent=%s duration_ms=%s",
+        state["task_id"],
+        state["trace_id"],
+        module_code,
+        agent.value,
+        max(0, round((perf_counter() - started_clock) * 1000)),
+    )
     return state
