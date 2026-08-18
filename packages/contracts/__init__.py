@@ -1,6 +1,7 @@
 """Versioned public data contracts for the financial agent platform."""
 
 from packages.contracts.enums import (
+    AGENT_MODULE_CODES,
     AgentName,
     AgentStatus,
     ConfidenceLevel,
@@ -9,15 +10,19 @@ from packages.contracts.enums import (
     Market,
     RiskLevel,
     TaskStatus,
+    module_code_for_agent,
 )
 from packages.contracts.models import (
     AgentStep,
+    APIError,
+    APIErrorEnvelope,
     CancelTaskResponse,
     ErrorDetail,
     EvidenceItem,
     ForecastReport,
     ForecastRequest,
     MarketSnapshot,
+    ModelUsage,
     PredictionResult,
     RiskAssessment,
     TaskDetail,
@@ -26,6 +31,9 @@ from packages.contracts.models import (
 )
 
 __all__ = [
+    "AGENT_MODULE_CODES",
+    "APIError",
+    "APIErrorEnvelope",
     "AgentName",
     "AgentStatus",
     "AgentStep",
@@ -39,11 +47,13 @@ __all__ = [
     "ForecastRequest",
     "Market",
     "MarketSnapshot",
+    "ModelUsage",
     "PredictionResult",
     "RiskAssessment",
     "RiskLevel",
     "TaskDetail",
     "TaskReference",
     "TaskStatus",
+    "module_code_for_agent",
     "utc_now",
 ]

@@ -53,18 +53,29 @@ class ErrorDetail(ContractModel):
     code: str = Field(min_length=2, max_length=80)
     message: str = Field(min_length=1, max_length=1000)
     agent: AgentName | None = None
+    module_code: str | None = Field(default=None, pattern=r"^[A-Z]{3}-\d{2}$")
     retryable: bool = False
     details: dict[str, Any] = Field(default_factory=dict)
 
 
 class AgentStep(ContractModel):
     agent: AgentName
+    module_code: str = Field(default="AGT-01", pattern=r"^[A-Z]{3}-\d{2}$")
     status: AgentStatus = AgentStatus.PENDING
     started_at: datetime | None = None
     finished_at: datetime | None = None
     duration_ms: int | None = Field(default=None, ge=0)
     summary: str | None = Field(default=None, max_length=500)
     error: ErrorDetail | None = None
+
+
+class ModelUsage(ContractModel):
+    provider: str | None = None
+    model: str | None = None
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+    estimated_cost_usd: float | None = Field(default=None, ge=0)
 
 
 class EvidenceItem(ContractModel):
@@ -123,6 +134,21 @@ class TaskDetail(TaskReference):
     timeline: list[AgentStep] = Field(default_factory=list)
     report: ForecastReport | None = None
     error: ErrorDetail | None = None
+    model_usage: ModelUsage = Field(default_factory=ModelUsage)
+
+
+class APIError(ContractModel):
+    code: str = Field(min_length=2, max_length=80)
+    message: str = Field(min_length=1, max_length=1000)
+    module_code: str = Field(pattern=r"^[A-Z]{3}-\d{2}$")
+    trace_id: UUID
+    task_id: UUID | None = None
+    retryable: bool = False
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class APIErrorEnvelope(ContractModel):
+    error: APIError
 
 
 class CancelTaskResponse(ContractModel):

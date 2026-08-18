@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-W1-06 已完成：工程骨架、六节点 LangGraph、PostgreSQL 检查点、CI、AkShare 真实行情，以及可替换的 Mock/OpenAI-compatible LLM Provider 已可运行。
+W2/W3 集成链路已完成：任务由 API 写入 PostgreSQL 和 Redis，Worker 自动消费并按节点执行 LangGraph；节点状态、错误、`task_id`、`trace_id`、`module_code` 和模型用量可由 Web 轮询查看。
 
 首月目标链路：
 
@@ -47,7 +47,7 @@ Web -> FastAPI -> Redis/Worker -> LangGraph -> PostgreSQL -> 研究报告
    docker compose down
    ```
 
-默认使用不联网的 Mock LLM。需要接入真实模型时，在 `.env` 中设置 `LLM_PROVIDER=openai-compatible`、`LLM_API_KEY`、`LLM_BASE_URL` 和 `LLM_MODEL`，详见 `docs/w1-06-agent-runtime-provider.md`。
+默认使用不联网的 Mock Data 与 Mock LLM，保证学生团队没有外部 Key 也能稳定演示。需要真实行情时设置 `MARKET_DATA_PROVIDER=akshare`；需要兼容模型时设置 `LLM_PROVIDER=openai-compatible`、`LLM_API_KEY`、`LLM_BASE_URL` 和 `LLM_MODEL`。
 
 ## 项目结构
 
@@ -66,8 +66,9 @@ docs/                       产品、架构与开发文档
 
 ## 当前限制
 
-- 六个 Agent 已通过 API 同步运行；Worker 异步队列将在后续阶段接入。
-- 任务列表暂存于 API 内存，LangGraph 运行检查点已写入 PostgreSQL。
-- 已接入 A 股、美股和港股真实日线；新闻与财务数据仍为后续阶段，LLM 默认使用 Mock，可按配置切换真实模型。
+- API、Redis、Worker、LangGraph 和 PostgreSQL 已打通；`POST /run` 仅保留给调试和测试，Web 使用异步队列。
+- 任务、节点时间线和报告持久化到 PostgreSQL；LangGraph checkpoint 同样使用 PostgreSQL。
+- 已提供 Mock 与 AkShare 行情模式；新闻与财务数据仍为后续阶段。
+- 已提供 Mock 与 OpenAI-compatible LLM；当前只有 Research Agent 使用 LLM。
 - Prediction Agent 当前仍使用规则模型，输出只用于验证产品链路。
 - 产品仅用于研究与教学，不构成投资建议。

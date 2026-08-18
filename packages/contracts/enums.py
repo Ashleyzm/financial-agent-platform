@@ -26,6 +26,22 @@ class AgentName(StrEnum):
     REPORT = "report"
 
 
+AGENT_MODULE_CODES: dict[AgentName, str] = {
+    AgentName.SUPERVISOR: "AGT-01",
+    AgentName.DATA: "FIN-02",
+    AgentName.RESEARCH: "AGT-03",
+    AgentName.PREDICTION: "AGT-03",
+    AgentName.RISK: "AGT-03",
+    AgentName.REPORT: "FIN-06",
+}
+
+
+def module_code_for_agent(agent: AgentName) -> str:
+    """Return the stable owner-routing code for an Agent node."""
+
+    return AGENT_MODULE_CODES[agent]
+
+
 class AgentStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"

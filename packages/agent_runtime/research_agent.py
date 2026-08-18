@@ -3,8 +3,13 @@
 from pydantic import BaseModel, Field, HttpUrl
 
 from packages.agent_runtime.state import AgentState
-from packages.contracts import EvidenceItem, EvidenceType
-from packages.model_provider import ChatMessage, LLMProvider, LLMRequest
+from packages.contracts import EvidenceItem, EvidenceType, ModelUsage
+from packages.model_provider import (
+    ChatMessage,
+    LLMProvider,
+    LLMRequest,
+    complete_structured_with_response,
+)
 from packages.model_provider.errors import LLMProviderError
 
 
@@ -61,8 +66,10 @@ def run_research_agent(
     """Call the provider and merge validated research output into shared AgentState."""
 
     try:
-        output = provider.complete_structured(
-            build_research_request(state, timeout_seconds=timeout_seconds), ResearchOutput
+        output, response = complete_structured_with_response(
+            provider,
+            build_research_request(state, timeout_seconds=timeout_seconds),
+            ResearchOutput,
         )
     except LLMProviderError:
         raise
@@ -71,6 +78,17 @@ def run_research_agent(
 
     state["research_summary"] = _render_summary(output)
     state["evidence"].extend(_to_contract_evidence(output))
+    usage = response.usage
+    input_tokens = int(usage.get("input_tokens", usage.get("prompt_tokens", 0)) or 0)
+    output_tokens = int(usage.get("output_tokens", usage.get("completion_tokens", 0)) or 0)
+    total_tokens = int(usage.get("total_tokens", input_tokens + output_tokens) or 0)
+    state["model_usage"] = ModelUsage(
+        provider=response.provider,
+        model=response.model,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
+    )
 
 
 def _render_summary(output: ResearchOutput) -> str:

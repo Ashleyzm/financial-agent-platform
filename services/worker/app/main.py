@@ -5,7 +5,8 @@ from langgraph.checkpoint.postgres import PostgresSaver
 from packages.agent_runtime import LangGraphWorkflowRunner
 from packages.contracts import ErrorDetail, TaskStatus, utc_now
 from packages.core.config import settings
-from packages.financial_data import AkShareProvider
+from packages.financial_data import create_market_data_provider
+from packages.model_provider import create_model_provider
 from packages.task_store import PostgresTaskStore, RedisTaskQueue
 from packages.task_store.base import InvalidTaskTransitionError, TaskNotFoundError
 
@@ -19,6 +20,14 @@ logger = logging.getLogger("worker")
 def run() -> None:
     store = PostgresTaskStore(settings.resolved_database_url)
     queue = RedisTaskQueue(settings.redis_url)
+    market_data_provider = create_market_data_provider(settings.market_data_provider)
+    llm_provider = create_model_provider(
+        provider=settings.llm_provider,
+        api_key=settings.llm_api_key,
+        model=settings.llm_model,
+        base_url=settings.llm_base_url,
+        max_retries=settings.llm_max_retries,
+    )
     logger.info(
         "worker_started version=%s environment=%s",
         settings.app_version,
@@ -31,7 +40,10 @@ def run() -> None:
             checkpointer.setup()
             runner = LangGraphWorkflowRunner(
                 checkpointer,
-                market_data_provider=AkShareProvider(),
+                market_data_provider=market_data_provider,
+                llm_provider=llm_provider,
+                llm_timeout_seconds=settings.llm_timeout_seconds,
+                state_listener=store.save,
             )
             logger.info("worker_ready")
             while True:
@@ -39,7 +51,6 @@ def run() -> None:
                 if task_id is None:
                     continue
 
-                logger.info("worker_task_received task_id=%s", task_id)
                 try:
                     state = store.claim_for_run(task_id)
                 except (TaskNotFoundError, InvalidTaskTransitionError) as exc:
@@ -51,17 +62,27 @@ def run() -> None:
                     continue
 
                 store.save(state)
+                logger.info(
+                    "worker_task_received task_id=%s trace_id=%s module_code=PLT-03",
+                    task_id,
+                    state["trace_id"],
+                )
 
                 try:
                     state = runner(state)
                 except Exception as exc:
-                    logger.exception("worker_task_failed task_id=%s", task_id)
+                    logger.exception(
+                        "worker_task_failed task_id=%s trace_id=%s module_code=PLT-03",
+                        task_id,
+                        state["trace_id"],
+                    )
                     state = _mark_failed(state, exc)
 
                 store.save(state)
                 logger.info(
-                    "worker_task_finished task_id=%s status=%s",
+                    "worker_task_finished task_id=%s trace_id=%s module_code=PLT-03 status=%s",
                     task_id,
+                    state["trace_id"],
                     state["status"].value,
                 )
     finally:
@@ -77,6 +98,7 @@ def _mark_failed(state, exc: Exception):
         ErrorDetail(
             code="worker_execution_failed",
             message=str(exc),
+            module_code="PLT-03",
             retryable=False,
         )
     )

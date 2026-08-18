@@ -1,0 +1,14 @@
+* @Ashleyzm
+
+/services/api/ @bls823048 @Ashleyzm
+/services/worker/ @bls823048 @Ashleyzm
+/infra/ @bls823048 @Ashleyzm
+/packages/task_store/ @bls823048 @Ashleyzm
+
+/packages/agent_runtime/ @gaiyihan123 @Ashleyzm
+/packages/model_provider/ @gaiyihan123 @Ashleyzm
+
+/apps/web/ @Ashleyzm
+/packages/financial_data/ @Ashleyzm
+
+/packages/contracts/ @Ashleyzm @bls823048 @gaiyihan123

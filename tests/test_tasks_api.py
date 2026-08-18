@@ -85,6 +85,10 @@ def test_unknown_task_returns_404() -> None:
     response = client.get(f"/api/v1/tasks/{uuid4()}")
 
     assert response.status_code == 404
+    payload = response.json()["error"]
+    assert payload["code"] == "task_not_found"
+    assert payload["module_code"] == "PLT-03"
+    assert payload["trace_id"]
 
 
 def test_invalid_request_returns_422() -> None:
@@ -94,3 +98,4 @@ def test_invalid_request_returns_422() -> None:
     )
 
     assert response.status_code == 422
+    assert response.json()["error"]["code"] == "request_validation_failed"

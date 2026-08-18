@@ -12,9 +12,11 @@ from packages.contracts import (
     ForecastReport,
     ForecastRequest,
     MarketSnapshot,
+    ModelUsage,
     PredictionResult,
     RiskAssessment,
     TaskStatus,
+    module_code_for_agent,
     utc_now,
 )
 
@@ -35,6 +37,7 @@ class AgentState(TypedDict):
     risk: RiskAssessment | None
     report: ForecastReport | None
     errors: list[ErrorDetail]
+    model_usage: ModelUsage
     created_at: datetime
     updated_at: datetime
 
@@ -54,7 +57,9 @@ def create_initial_state(
         request=request,
         status=TaskStatus.QUEUED,
         current_agent=None,
-        timeline=[AgentStep(agent=agent) for agent in AgentName],
+        timeline=[
+            AgentStep(agent=agent, module_code=module_code_for_agent(agent)) for agent in AgentName
+        ],
         market_snapshot=None,
         research_summary=None,
         evidence=[],
@@ -62,6 +67,7 @@ def create_initial_state(
         risk=None,
         report=None,
         errors=[],
+        model_usage=ModelUsage(),
         created_at=now,
         updated_at=now,
     )

@@ -10,7 +10,7 @@ from packages.model_provider.factory import create_model_provider
 from packages.model_provider.mock import MockLLMProvider
 from packages.model_provider.models import ChatMessage, LLMRequest, LLMResponse
 from packages.model_provider.openai_compatible import OpenAICompatibleProvider
-from packages.model_provider.protocol import LLMProvider
+from packages.model_provider.protocol import LLMProvider, complete_structured_with_response
 
 __all__ = [
     "ChatMessage",
@@ -24,4 +24,5 @@ __all__ = [
     "OpenAICompatibleProvider",
     "StructuredOutputError",
     "create_model_provider",
+    "complete_structured_with_response",
 ]

@@ -13,6 +13,7 @@ from packages.contracts import (
     ForecastReport,
     ForecastRequest,
     MarketSnapshot,
+    ModelUsage,
     PredictionResult,
     RiskAssessment,
     TaskStatus,
@@ -56,6 +57,7 @@ def state_to_dict(state: AgentState) -> dict[str, Any]:
             state["report"].model_dump(mode="json") if state["report"] is not None else None
         ),
         "errors": [error.model_dump(mode="json") for error in state["errors"]],
+        "model_usage": state["model_usage"].model_dump(mode="json"),
         "created_at": _iso(state["created_at"]),
         "updated_at": _iso(state["updated_at"]),
     }
@@ -96,6 +98,7 @@ def state_from_dict(payload: dict[str, Any]) -> AgentState:
             else None
         ),
         errors=[ErrorDetail.model_validate(error) for error in payload.get("errors", [])],
+        model_usage=ModelUsage.model_validate(payload.get("model_usage", {})),
         created_at=datetime.fromisoformat(payload["created_at"]),
         updated_at=datetime.fromisoformat(payload["updated_at"]),
     )
