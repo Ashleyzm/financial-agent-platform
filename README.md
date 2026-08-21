@@ -77,9 +77,16 @@ Web -> FastAPI -> PostgreSQL / Redis -> Worker -> LangGraph -> Forecast Report
 
 ### Run the complete platform
 
+Windows:
+
 ```powershell
-Copy-Item .env.example .env
-docker compose up -d --build --wait
+scripts\start.cmd
+```
+
+Linux/macOS:
+
+```bash
+./scripts/start.sh
 ```
 
 Open:
@@ -95,8 +102,10 @@ The development profile binds all published ports to `127.0.0.1`; it is not reac
 Stop the platform:
 
 ```powershell
-docker compose down
+scripts\stop.cmd
 ```
+
+On Linux/macOS use `./scripts/stop.sh`. The scripts create `.env` from the safe Mock defaults when needed, wait for all five health checks, and preserve named data volumes when stopping.
 
 ## Provider configuration
 
@@ -150,6 +159,14 @@ python tests/e2e_smoke.py
 ```
 
 Every pull request runs code-quality checks and a fresh Docker end-to-end workflow in GitHub Actions.
+
+Run the repeatable F0 handover gate after the platform is healthy:
+
+```powershell
+python scripts/verify_f0.py --docker
+```
+
+See [the handover runbook](docs/handover-runbook.md) and [v0.1.0 release notes](docs/releases/v0.1.0.md) for acceptance evidence and operating limits.
 
 ## Roadmap
 

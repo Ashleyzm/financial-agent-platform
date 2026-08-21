@@ -77,9 +77,16 @@ Web -> FastAPI -> PostgreSQL / Redis -> Worker -> LangGraph -> 预测研究报�
 
 ### 启动完整平台
 
+Windows：
+
 ```powershell
-Copy-Item .env.example .env
-docker compose up -d --build --wait
+scripts\start.cmd
+```
+
+Linux/macOS：
+
+```bash
+./scripts/start.sh
 ```
 
 打开：
@@ -95,8 +102,10 @@ docker compose up -d --build --wait
 停止平台：
 
 ```powershell
-docker compose down
+scripts\stop.cmd
 ```
+
+Linux/macOS 使用 `./scripts/stop.sh`。脚本会在需要时从安全的 Mock 默认配置创建 `.env`，等待五个服务全部健康；停止时默认保留命名数据卷。
 
 ## Provider 配置
 
@@ -150,6 +159,14 @@ python tests/e2e_smoke.py
 ```
 
 每个 Pull Request 都会在 GitHub Actions 中完成代码质量检查，并从零启动 Docker 环境进行端到端测试。
+
+平台健康后可运行可重复的 F0 接手门禁：
+
+```powershell
+python scripts/verify_f0.py --docker
+```
+
+验收证据、故障定位与运行边界见[接手手册](docs/handover-runbook.md)和 [v0.1.0 发布说明](docs/releases/v0.1.0.md)。
 
 ## 后续路线
 

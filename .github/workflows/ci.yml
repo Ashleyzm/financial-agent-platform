@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - "fix/**"
   pull_request:
 
 permissions:
@@ -27,6 +29,10 @@ jobs:
         run: ruff format --check .
       - name: Test
         run: pytest -q
+      - name: Verify F0 handover demos
+        run: |
+          sh -n scripts/start.sh scripts/stop.sh
+          python scripts/verify_f0.py
 
   docker-e2e:
     needs: quality
@@ -38,8 +44,10 @@ jobs:
         run: cp .env.example .env
       - name: Start platform
         run: docker compose up -d --build --wait
-      - name: Run async smoke test
-        run: python tests/e2e_smoke.py
+      - name: Run F0 Docker acceptance
+        run: |
+          docker compose exec -T api python scripts/verify_f0.py
+          python tests/e2e_smoke.py
       - name: Show logs on failure
         if: failure()
         run: docker compose logs --no-color
