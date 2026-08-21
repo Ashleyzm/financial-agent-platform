@@ -29,6 +29,15 @@ from packages.contracts.models import (
     TaskReference,
     utc_now,
 )
+from packages.contracts.risk import (
+    HumanReview,
+    HumanReviewStatus,
+    RiskDecision,
+    RiskDecisionLabel,
+    RiskExposureBand,
+    TechnicalRiskInput,
+    TechnicalRiskOutput,
+)
 
 __all__ = [
     "AGENT_MODULE_CODES",
@@ -50,10 +59,17 @@ __all__ = [
     "ModelUsage",
     "PredictionResult",
     "RiskAssessment",
+    "RiskDecision",
+    "RiskDecisionLabel",
+    "RiskExposureBand",
     "RiskLevel",
     "TaskDetail",
     "TaskReference",
     "TaskStatus",
+    "TechnicalRiskInput",
+    "TechnicalRiskOutput",
+    "HumanReview",
+    "HumanReviewStatus",
     "module_code_for_agent",
     "utc_now",
 ]

@@ -18,6 +18,7 @@ from packages.agent_runtime.research_agent import (
     build_research_request,
     run_research_agent,
 )
+from packages.agent_runtime.risk_engine import RiskFusionEngine, TechnicalRiskAgent
 from packages.agent_runtime.state import AgentState, create_initial_state
 from packages.agent_runtime.tools import AgentTool, ToolContext, ToolRegistry, ToolResult
 
@@ -40,4 +41,6 @@ __all__ = [
     "ResearchOutput",
     "build_research_request",
     "run_research_agent",
+    "RiskFusionEngine",
+    "TechnicalRiskAgent",
 ]
